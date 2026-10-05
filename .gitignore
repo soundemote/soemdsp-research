@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+graphs/ping_envelope/preview.html
+graphs/ping_envelope/plotly.min.js

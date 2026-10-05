@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ping Envelope fall</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1917;
+      --muted: #57534e;
+      --line: #e7e5e4;
+      --paper: #f6f4ef;
+      --card: #fffcf8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 15px/1.45 "Iowan Old Style", Palatino, Georgia, serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 22px 48px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin: 0 0 6px;
+    }
+    .lede {
+      margin: 0;
+      max-width: 68ch;
+      color: var(--muted);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      margin-top: 18px;
+      align-items: start;
+    }
+    @media (max-width: 920px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    #plot { height: 560px; }
+    .controls { padding: 14px 16px 16px; }
+    .section-label {
+      margin: 12px 0 6px;
+      font: 600 0.72rem/1.2 ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .section-label:first-child { margin-top: 0; }
+    label.field {
+      display: block;
+      margin-top: 8px;
+      font: 500 0.82rem/1.2 ui-sans-serif, system-ui, sans-serif;
+    }
+    .slider-row {
+      display: grid;
+      grid-template-columns: 1fr 6.5rem;
+      gap: 8px;
+      align-items: center;
+    }
+    input[type="range"] { width: 100%; accent-color: #1d4ed8; }
+    input[type="number"] {
+      width: 100%;
+      font: 13px/1.2 ui-sans-serif, system-ui, sans-serif;
+      padding: 4px 6px;
+      border: 1px solid #d6d3d1;
+      border-radius: 6px;
+      background: white;
+      color: var(--ink);
+    }
+    .check, .choice {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 5px 0;
+      font: 14px/1.3 ui-sans-serif, system-ui, sans-serif;
+    }
+    .check label { flex: 1; display: flex; gap: 8px; align-items: center; }
+    .choice span, .check span { flex: 1; }
+    button.load {
+      border: 0;
+      background: transparent;
+      color: #1d4ed8;
+      font: inherit;
+      cursor: pointer;
+      padding: 0;
+    }
+    button.load:hover { text-decoration: underline; }
+    .start-readout {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font: 12px/1.35 ui-sans-serif, system-ui, sans-serif;
+    }
+    #status {
+      min-height: 1.2em;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font: 12px/1.3 ui-sans-serif, system-ui, sans-serif;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-variant-numeric: tabular-nums;
+      font: 13.5px/1.35 ui-sans-serif, system-ui, sans-serif;
+    }
+    th, td {
+      text-align: left;
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    th {
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .swatch {
+      display: inline-block;
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: 99px;
+      margin-right: 6px;
+      vertical-align: -1px;
+    }
+    pre.formula {
+      margin: 14px 0 0;
+      padding: 12px 14px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow-x: auto;
+      font: 12.5px/1.45 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    }
+    .assumptions {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Ping Envelope fall</h1>
+  <p class="lede">Sample-by-sample one-pole chase toward silence. The four sliders are the whole control. Checked examples are other saved settings of those same four numbers, drawn on top.</p>
+  <div class="layout">
+    <div class="card" id="plot" role="img" aria-label="Ping Envelope fall plot"></div>
+    <div class="card controls">
+      <div class="section-label">Parameters</div>
+      <div id="params"></div>
+      <p class="start-readout" id="start-readout"></p>
+      <div class="section-label">Example overlays</div>
+      <div id="overlays"></div>
+      <div class="section-label">View</div>
+      <label class="check"><input type="checkbox" id="show-perceptual" checked> <span>−40 dB marker (0.01)</span></label>
+      <label class="check"><input type="checkbox" id="log-y" checked> <span>Log amplitude</span></label>
+      <label class="choice"><input type="radio" name="window" value="full" checked> Full tails</label>
+      <label class="choice"><input type="radio" name="window" value="live"> Live tail</label>
+      <label class="choice"><input type="radio" name="window" value="2s"> First 2 s</label>
+      <p id="status"></p>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Curve</th>
+        <th>−40 dB</th>
+        <th>−60 dB eng</th>
+        <th>End amplitude</th>
+        <th>Stop</th>
+      </tr>
+    </thead>
+    <tbody id="tails"></tbody>
+  </table>
+  <pre class="formula">env[0] = trigger_height
+x      = feedback * env + offset
+shape  = 0  if x &lt;= 0
+         1  if x &gt;= 1
+         10^(5*(x-1))  otherwise
+f      = shape * max_release_hz
+k      = 1 - exp(-2π f / sample_rate)    # 0 if f &lt;= 0, 1 at or above Nyquist
+env    = env + k * (0 - env)</pre>
+  <p class="assumptions" id="assumptions"></p>
+</main>
+<script id="ping-config" type="application/json">
+{
+  "sample_rate": 48000,
+  "eng_floor": 0.001,
+  "perceptual_floor": 0.01,
+  "max_seconds": 120,
+  "exp_decades": 5,
+  "record_relative_drop": 0.005,
+  "live_defaults_id": "example_b",
+  "live_color": "#1d4ed8",
+  "slider_ranges": {
+    "feedback": {"min": 0, "max": 2, "step": 0.0001},
+    "max_release_hz": {"min": 0.01, "max": 4000},
+    "offset": {"min": -1.5, "max": 1.5, "step": 0.001},
+    "trigger_height": {"min": 0, "max": 2, "step": 0.001}
+  },
+  "examples": [
+    {
+      "id": "example_a",
+      "label": "Example A",
+      "color": "#b91c1c",
+      "visible_by_default": true,
+      "feedback": 1.0,
+      "max_release_hz": 10,
+      "offset": 0.0,
+      "trigger_height": 1.0,
+      "note": "feedback 1, max release 10 Hz, offset 0, trigger height 1"
+    },
+    {
+      "id": "example_b",
+      "label": "Example B",
+      "color": "#047857",
+      "visible_by_default": false,
+      "feedback": 0.7718,
+      "max_release_hz": 1000,
+      "offset": 0.5,
+      "trigger_height": 1.0,
+      "note": "feedback 0.7718, max release 1000 Hz, offset 0.5, trigger height 1"
+    },
+    {
+      "id": "example_c",
+      "label": "Example C",
+      "color": "#b45309",
+      "visible_by_default": true,
+      "feedback": 0.7718,
+      "max_release_hz": 1000,
+      "offset": 0.0,
+      "trigger_height": 1.0,
+      "note": "feedback 0.7718, max release 1000 Hz, offset 0, trigger height 1"
+    }
+  ]
+}
+</script>
+<script src="fall_math.js"></script>
+<script>
+const cfg = JSON.parse(document.getElementById("ping-config").textContent);
+const ENG_COLOR = "#9a3412";
+const MARK_COLOR = "#57534e";
+
+const paramsEl = document.getElementById("params");
+const overlaysEl = document.getElementById("overlays");
+const tailsEl = document.getElementById("tails");
+const statusEl = document.getElementById("status");
+const startEl = document.getElementById("start-readout");
+const plotEl = document.getElementById("plot");
+const showPerceptualEl = document.getElementById("show-perceptual");
+const logYEl = document.getElementById("log-y");
+
+const ranges = cfg.slider_ranges;
+const inputs = {};
+let token = 0;
+let drawing = null;
+
+function clamp(value, min, max) {
+  if (!Number.isFinite(value)) return min;
+  return Math.min(max, Math.max(min, value));
+}
+
+function addParam(id, label, opts) {
+  const field = document.createElement("label");
+  field.className = "field";
+  field.htmlFor = id + "-num";
+  field.textContent = label;
+  const row = document.createElement("div");
+  row.className = "slider-row";
+  const range = document.createElement("input");
+  range.type = "range";
+  range.id = id;
+  range.min = String(opts.rangeMin);
+  range.max = String(opts.rangeMax);
+  range.step = String(opts.step);
+  const num = document.createElement("input");
+  num.type = "number";
+  num.id = id + "-num";
+  num.min = String(opts.min);
+  num.max = String(opts.max);
+  num.step = String(opts.numStep);
+  row.append(range, num);
+  paramsEl.append(field, row);
+  inputs[id] = { range, num, opts };
+  range.addEventListener("input", () => {
+    num.value = String(opts.fromRange(Number(range.value)));
+    schedule();
+  });
+  num.addEventListener("input", () => {
+    const value = clamp(Number(num.value), opts.min, opts.max);
+    range.value = String(opts.toRange(value));
+    schedule();
+  });
+}
+
+const hz = ranges.max_release_hz;
+const logHzMin = Math.log(hz.min);
+const logHzMax = Math.log(hz.max);
+addParam("feedback", "Feedback amount", {
+  min: ranges.feedback.min, max: ranges.feedback.max,
+  rangeMin: ranges.feedback.min, rangeMax: ranges.feedback.max,
+  step: ranges.feedback.step, numStep: ranges.feedback.step,
+  fromRange: (v) => v, toRange: (v) => v,
+});
+addParam("max_release_hz", "Max release Hz", {
+  min: hz.min, max: hz.max, rangeMin: 0, rangeMax: 1000, step: 1, numStep: "any",
+  fromRange: (unit) => Math.exp(logHzMin + (logHzMax - logHzMin) * (unit / 1000)),
+  toRange: (value) => {
+    const clamped = clamp(value, hz.min, hz.max);
+    return Math.round(1000 * (Math.log(clamped) - logHzMin) / (logHzMax - logHzMin));
+  },
+});
+addParam("offset", "Offset", {
+  min: ranges.offset.min, max: ranges.offset.max,
+  rangeMin: ranges.offset.min, rangeMax: ranges.offset.max,
+  step: ranges.offset.step, numStep: ranges.offset.step,
+  fromRange: (v) => v, toRange: (v) => v,
+});
+addParam("trigger_height", "Trigger height", {
+  min: ranges.trigger_height.min, max: ranges.trigger_height.max,
+  rangeMin: ranges.trigger_height.min, rangeMax: ranges.trigger_height.max,
+  step: ranges.trigger_height.step, numStep: ranges.trigger_height.step,
+  fromRange: (v) => v, toRange: (v) => v,
+});
+
+const liveBox = document.createElement("input");
+liveBox.type = "checkbox";
+liveBox.checked = true;
+const liveLabel = document.createElement("label");
+liveLabel.className = "check";
+const liveText = document.createElement("span");
+liveText.textContent = "Live";
+liveLabel.append(liveBox, liveText);
+overlaysEl.append(liveLabel);
+liveBox.addEventListener("change", schedule);
+
+const exampleBoxes = new Map();
+for (const example of cfg.examples) {
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.checked = Boolean(example.visible_by_default);
+  const row = document.createElement("div");
+  row.className = "check";
+  const label = document.createElement("label");
+  label.title = example.note;
+  const text = document.createElement("span");
+  text.textContent = example.label;
+  label.append(box, text);
+  const load = document.createElement("button");
+  load.type = "button";
+  load.className = "load";
+  load.textContent = "Load";
+  load.title = "Copy these four values into the sliders";
+  load.addEventListener("click", () => {
+    setParams(example);
+    schedule();
+  });
+  row.append(label, load);
+  overlaysEl.append(row);
+  exampleBoxes.set(example.id, box);
+  box.addEventListener("change", schedule);
+}
+
+showPerceptualEl.addEventListener("change", schedule);
+logYEl.addEventListener("change", schedule);
+for (const radio of document.querySelectorAll('input[name="window"]')) {
+  radio.addEventListener("change", schedule);
+}
+
+function readParams() {
+  const out = {};
+  for (const [id, entry] of Object.entries(inputs)) {
+    out[id] = clamp(Number(entry.num.value), entry.opts.min, entry.opts.max);
+  }
+  return out;
+}
+
+function setParams(raw) {
+  for (const [id, entry] of Object.entries(inputs)) {
+    const value = clamp(Number(raw[id]), entry.opts.min, entry.opts.max);
+    entry.num.value = String(value);
+    entry.range.value = String(entry.opts.toRange(value));
+  }
+  updateStart();
+}
+
+function formatHz(value) {
+  if (value >= 100) return String(Math.round(value * 10) / 10);
+  if (value >= 1) return String(Math.round(value * 100) / 100);
+  return String(Math.round(value * 1000) / 1000);
+}
+
+function formatAmp(value) {
+  if (!Number.isFinite(value)) return "—";
+  if (value !== 0 && Math.abs(value) < 0.0001) return value.toExponential(2);
+  return String(Math.round(value * 100000) / 100000);
+}
+
+function formatTime(seconds) {
+  if (seconds === null || seconds === undefined) return "—";
+  if (seconds < 0.001) return (seconds * 1e6).toFixed(0) + " µs";
+  if (seconds < 1) return (seconds * 1000).toFixed(2) + " ms";
+  if (seconds < 10) return seconds.toFixed(3) + " s";
+  return seconds.toFixed(2) + " s";
+}
+
+function stopText(curve) {
+  if (curve.stopped === "eng_floor") return "reached 0.001";
+  if (curve.stopped === "stalled") return "stalled, release hit 0";
+  return "capped at " + cfg.max_seconds + " s";
+}
+
+function updateStart() {
+  const params = readParams();
+  const x = params.feedback * params.trigger_height + params.offset;
+  const rate = pingFall.releaseHz(params.trigger_height, params, cfg.exp_decades);
+  startEl.textContent = "At the trigger, x = " + formatAmp(x) + ", release = " + formatHz(rate) + " Hz.";
+}
+
+function windowMode() {
+  const picked = document.querySelector('input[name="window"]:checked');
+  return picked ? picked.value : "full";
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(src));
+    document.head.appendChild(script);
+  });
+}
+
+async function ensurePlotly() {
+  if (window.Plotly) return;
+  try {
+    await loadScript("plotly.min.js");
+  } catch (err) {
+    await loadScript("https://cdn.plot.ly/plotly-2.35.2.min.js");
+  }
+}
+
+const curveCache = new Map();
+let traceIds = [];
+
+function cacheKey(params) {
+  return [params.feedback, params.max_release_hz, params.offset, params.trigger_height].join("|");
+}
+
+function runCurve(params, myToken, label) {
+  const key = cacheKey(params);
+  if (curveCache.has(key)) return Promise.resolve(curveCache.get(key));
+  return new Promise((resolve, reject) => {
+    const state = pingFall.createSimulation(params, cfg);
+    const budget = 500000;
+    function tick() {
+      if (myToken !== token) {
+        reject(new Error("cancelled"));
+        return;
+      }
+      const result = pingFall.advanceSimulation(state, budget);
+      if (!result) {
+        const pct = state.nmax > 0 ? Math.round((100 * state.n) / state.nmax) : 100;
+        statusEl.textContent = "Running " + label + " sample loop… " + pct + "%";
+        setTimeout(tick, 0);
+        return;
+      }
+      curveCache.set(key, result);
+      resolve(result);
+    }
+    tick();
+  });
+}
+
+function xMax(series, liveCurve) {
+  const mode = windowMode();
+  if (mode === "2s") return 2;
+  if (mode === "live") {
+    const end = liveCurve && liveCurve.times.length ? liveCurve.times[liveCurve.times.length - 1] : 0;
+    return Math.max(end * 1.08, 1 / cfg.sample_rate);
+  }
+  let end = 0;
+  for (const item of series) {
+    const curve = item.curve;
+    if (curve.times.length) end = Math.max(end, curve.times[curve.times.length - 1]);
+  }
+  return Math.max(end * 1.02, 1 / cfg.sample_rate);
+}
+
+function render(series, liveCurve) {
+  const logY = logYEl.checked;
+  const showMark = showPerceptualEl.checked;
+  let peak = 0;
+  const data = series.map((item) => {
+    for (const amp of item.curve.amps) {
+      if (amp > peak) peak = amp;
+    }
+    return {
+      type: "scatter",
+      mode: "lines",
+      name: item.label,
+      x: item.curve.times,
+      y: item.curve.amps.map((amp) => (logY && !(amp > 0) ? null : amp)),
+      line: { color: item.color, width: item.id === "live" ? 2.5 : 2 },
+      meta: item.id,
+      hovertemplate: "%{y:.5f}<extra>%{fullData.name}</extra>",
+    };
+  });
+  const shapes = [{
+    type: "line", xref: "paper", x0: 0, x1: 1, yref: "y",
+    y0: cfg.eng_floor, y1: cfg.eng_floor,
+    line: { color: ENG_COLOR, width: 1.5, dash: "dot" },
+  }];
+  const annotations = [{
+    xref: "paper", x: 1, xanchor: "right", yref: "y", y: cfg.eng_floor,
+    text: "0.001 eng (−60 dB)", showarrow: false, yanchor: "bottom",
+    font: { size: 11, color: ENG_COLOR },
+  }];
+  if (showMark) {
+    shapes.push({
+      type: "line", xref: "paper", x0: 0, x1: 1, yref: "y",
+      y0: cfg.perceptual_floor, y1: cfg.perceptual_floor,
+      line: { color: MARK_COLOR, width: 1, dash: "dash" },
+    });
+    annotations.push({
+      xref: "paper", x: 1, xanchor: "right", yref: "y", y: cfg.perceptual_floor,
+      text: "0.01 (−40 dB)", showarrow: false, yanchor: "bottom",
+      font: { size: 11, color: MARK_COLOR },
+    });
+  }
+  const layout = {
+    paper_bgcolor: "#fffcf8",
+    plot_bgcolor: "#ffffff",
+    margin: { l: 64, r: 24, t: 36, b: 52 },
+    legend: { orientation: "h", y: 1.12 },
+    hovermode: "x unified",
+    font: { family: "Georgia, Palatino, serif", color: "#1c1917", size: 13 },
+    height: 560,
+    uirevision: String(token) + windowMode() + logY + showMark,
+    xaxis: {
+      title: { text: "Time (seconds)" },
+      range: [0, xMax(series, liveCurve)],
+      zeroline: false,
+      gridcolor: "#e7e5e4",
+      showline: true,
+      linecolor: "#d6d3d1",
+    },
+    yaxis: {
+      title: { text: logY ? "Amplitude (log)" : "Amplitude" },
+      type: logY ? "log" : "linear",
+      dtick: logY ? 1 : undefined,
+      range: logY
+        ? [Math.log10(cfg.eng_floor * 0.25), Math.log10(Math.max(peak, cfg.perceptual_floor) * 1.35)]
+        : [0, (peak > 0 ? peak : 1) * 1.08],
+      zeroline: false,
+      gridcolor: "#e7e5e4",
+      showline: true,
+      linecolor: "#d6d3d1",
+    },
+    shapes,
+    annotations,
+  };
+  traceIds = series.map((item) => item.id);
+  Plotly.react(plotEl, data, layout, { responsive: true, displaylogo: false, scrollZoom: true });
+  if (!plotEl.dataset.legendBound) {
+    plotEl.dataset.legendBound = "1";
+    plotEl.on("plotly_legendclick", (event) => {
+      const id = traceIds[event.curveNumber];
+      if (id === "live") liveBox.checked = !liveBox.checked;
+      else if (exampleBoxes.has(id)) exampleBoxes.get(id).checked = !exampleBoxes.get(id).checked;
+      schedule();
+      return false;
+    });
+  }
+  tailsEl.replaceChildren();
+  for (const item of series) {
+    const curve = item.curve;
+    const row = document.createElement("tr");
+    const cells = [
+      item.label,
+      formatTime(curve.tPerc),
+      formatTime(curve.tEng),
+      formatAmp(curve.endAmp),
+      stopText(curve),
+    ];
+    cells.forEach((text, index) => {
+      const cell = document.createElement("td");
+      if (index === 0) {
+        const swatch = document.createElement("i");
+        swatch.className = "swatch";
+        swatch.style.background = item.color;
+        cell.append(swatch, document.createTextNode(text));
+      } else {
+        cell.textContent = text;
+      }
+      row.append(cell);
+    });
+    tailsEl.append(row);
+  }
+}
+
+async function draw(myToken) {
+  updateStart();
+  const jobs = [];
+  if (liveBox.checked) {
+    jobs.push({ id: "live", label: "Live", color: cfg.live_color, params: readParams() });
+  }
+  for (const example of cfg.examples) {
+    if (exampleBoxes.get(example.id).checked) {
+      jobs.push({
+        id: example.id,
+        label: example.label,
+        color: example.color,
+        params: example,
+      });
+    }
+  }
+  const series = [];
+  let liveCurve = null;
+  try {
+    for (const job of jobs) {
+      statusEl.textContent = "Running " + job.label + " sample loop…";
+      const curve = await runCurve(job.params, myToken, job.label);
+      if (myToken !== token) return;
+      const item = { id: job.id, label: job.label, color: job.color, curve };
+      series.push(item);
+      if (job.id === "live") liveCurve = curve;
+    }
+  } catch (err) {
+    if (err && err.message === "cancelled") return;
+    statusEl.textContent = "Simulation failed.";
+    return;
+  }
+  if (myToken !== token) return;
+  render(series, liveCurve);
+  statusEl.textContent = "Sample rate " + cfg.sample_rate + " Hz.";
+}
+
+function schedule() {
+  const myToken = ++token;
+  clearTimeout(schedule.timer);
+  schedule.timer = setTimeout(() => {
+    drawing = draw(myToken);
+  }, 60);
+}
+
+document.getElementById("assumptions").textContent =
+  "Sample rate " + cfg.sample_rate + " Hz. Engineering tail stop is amplitude " +
+  cfg.eng_floor + " (−60 dB re 1). The dashed line at " + cfg.perceptual_floor +
+  " (−40 dB) is perceptual only and does not end the curve. The run also stops if release rate hits 0, or at " +
+  cfg.max_seconds + " s, whichever comes first. No attack stage: the fall starts at the trigger height and chases 0.";
+
+const liveDefaults = cfg.examples.find((example) => example.id === cfg.live_defaults_id) || cfg.examples[0];
+setParams(liveDefaults);
+
+ensurePlotly().then(() => schedule()).catch(() => {
+  statusEl.textContent = "Plotly failed to load. Run python -m graphs.ping_envelope to copy plotly.min.js, or allow the Plotly CDN.";
+});
+</script>
+</body>
+</html>
