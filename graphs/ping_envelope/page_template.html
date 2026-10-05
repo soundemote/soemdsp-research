@@ -157,14 +157,14 @@
 <body>
 <main>
   <h1>Ping Envelope fall</h1>
-  <p class="lede">Sample-by-sample one-pole chase toward silence. Sliders sweep the four fall parameters. A model is a named preset of those four, overlaid when its box is checked.</p>
+  <p class="lede">Sample-by-sample one-pole chase toward silence. The four sliders are the whole control. Checked examples are other saved settings of those same four numbers, drawn on top.</p>
   <div class="layout">
     <div class="card" id="plot" role="img" aria-label="Ping Envelope fall plot"></div>
     <div class="card controls">
       <div class="section-label">Parameters</div>
       <div id="params"></div>
       <p class="start-readout" id="start-readout"></p>
-      <div class="section-label">Overlays</div>
+      <div class="section-label">Example overlays</div>
       <div id="overlays"></div>
       <div class="section-label">View</div>
       <label class="check"><input type="checkbox" id="show-perceptual" checked> <span>−40 dB marker (0.01)</span></label>
@@ -299,17 +299,17 @@ liveLabel.append(liveBox, liveText);
 overlaysEl.append(liveLabel);
 liveBox.addEventListener("change", schedule);
 
-const modelBoxes = new Map();
-for (const model of cfg.models) {
+const exampleBoxes = new Map();
+for (const example of cfg.examples) {
   const box = document.createElement("input");
   box.type = "checkbox";
-  box.checked = Boolean(model.visible_by_default);
+  box.checked = Boolean(example.visible_by_default);
   const row = document.createElement("div");
   row.className = "check";
   const label = document.createElement("label");
-  label.title = model.note;
+  label.title = example.note;
   const text = document.createElement("span");
-  text.textContent = model.label;
+  text.textContent = example.label;
   label.append(box, text);
   const load = document.createElement("button");
   load.type = "button";
@@ -317,12 +317,12 @@ for (const model of cfg.models) {
   load.textContent = "Load";
   load.title = "Copy these four values into the sliders";
   load.addEventListener("click", () => {
-    setParams(model);
+    setParams(example);
     schedule();
   });
   row.append(label, load);
   overlaysEl.append(row);
-  modelBoxes.set(model.id, box);
+  exampleBoxes.set(example.id, box);
   box.addEventListener("change", schedule);
 }
 
@@ -533,7 +533,7 @@ function render(series, liveCurve) {
     plotEl.on("plotly_legendclick", (event) => {
       const id = traceIds[event.curveNumber];
       if (id === "live") liveBox.checked = !liveBox.checked;
-      else if (modelBoxes.has(id)) modelBoxes.get(id).checked = !modelBoxes.get(id).checked;
+      else if (exampleBoxes.has(id)) exampleBoxes.get(id).checked = !exampleBoxes.get(id).checked;
       schedule();
       return false;
     });
@@ -571,13 +571,13 @@ async function draw(myToken) {
   if (liveBox.checked) {
     jobs.push({ id: "live", label: "Live", color: cfg.live_color, params: readParams() });
   }
-  for (const model of cfg.models) {
-    if (modelBoxes.get(model.id).checked) {
+  for (const example of cfg.examples) {
+    if (exampleBoxes.get(example.id).checked) {
       jobs.push({
-        id: model.id,
-        label: model.label,
-        color: model.color,
-        params: model,
+        id: example.id,
+        label: example.label,
+        color: example.color,
+        params: example,
       });
     }
   }
@@ -616,7 +616,7 @@ document.getElementById("assumptions").textContent =
   " (−40 dB) is perceptual only and does not end the curve. The run also stops if release rate hits 0, or at " +
   cfg.max_seconds + " s, whichever comes first. No attack stage: the fall starts at the trigger height and chases 0.";
 
-const liveDefaults = cfg.models.find((model) => model.id === cfg.live_defaults_id) || cfg.models[0];
+const liveDefaults = cfg.examples.find((example) => example.id === cfg.live_defaults_id) || cfg.examples[0];
 setParams(liveDefaults);
 
 ensurePlotly().then(() => schedule()).catch(() => {

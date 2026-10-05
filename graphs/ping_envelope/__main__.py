@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from graphs.ping_envelope.plot import HERE, build_figure, render_index_html, write_index
-from graphs.ping_envelope.simulate import load_config, models, simulate_fall
+from graphs.ping_envelope.simulate import examples, load_config, simulate_fall
 
 
 def _format_time(seconds: float | None) -> str:
@@ -74,12 +74,12 @@ def main(argv: list[str] | None = None) -> int:
     print()
 
     named = []
-    for model in models():
-        print(f"Simulating {model.label}…", flush=True)
-        curve = simulate_fall(model.params)
-        named.append((model.label, model.color, curve))
+    for example in examples():
+        print(f"Simulating {example.label}…", flush=True)
+        curve = simulate_fall(example.params)
+        named.append((example.label, example.color, curve))
         print(
-            f"  {model.label:<18} "
+            f"  {example.label:<18} "
             f"−40 dB {_format_time(curve.t_perceptual_s):>10}   "
             f"−60 dB {_format_time(curve.t_eng_s):>10}   "
             f"end {curve.end_amplitude:.6f}   "
@@ -88,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.no_preview:
         preview = HERE / "preview.html"
-        build_figure(named, log_y=True, title="Ping Envelope fall — model presets").write_html(
+        build_figure(named, log_y=True, title="Ping Envelope fall — example settings").write_html(
             preview, include_plotlyjs=True, full_html=True
         )
         print()

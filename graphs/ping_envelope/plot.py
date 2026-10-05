@@ -7,7 +7,7 @@ from pathlib import Path
 
 import plotly.graph_objects as go
 
-from graphs.ping_envelope.simulate import FallCurve, load_config, models, simulate_fall
+from graphs.ping_envelope.simulate import FallCurve, examples, load_config, simulate_fall
 
 HERE = Path(__file__).resolve().parent
 TEMPLATE_PATH = HERE / "page_template.html"
@@ -109,13 +109,13 @@ def build_figure(
 
 
 def preset_curves() -> list[tuple[str, str, FallCurve]]:
-    return [(model.label, model.color, simulate_fall(model.params)) for model in models()]
+    return [(example.label, example.color, simulate_fall(example.params)) for example in examples()]
 
 
 def write_preview(path: Path | None = None) -> Path:
-    """Write a self-contained Plotly HTML snapshot of the model presets."""
+    """Write a self-contained Plotly HTML snapshot of the example settings."""
     destination = Path(path) if path is not None else PREVIEW_PATH
-    fig = build_figure(preset_curves(), log_y=True, title="Ping Envelope fall — model presets")
+    fig = build_figure(preset_curves(), log_y=True, title="Ping Envelope fall — example settings")
     fig.write_html(destination, include_plotlyjs=True, full_html=True)
     return destination
 

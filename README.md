@@ -21,24 +21,24 @@ env    = env + k * (0 - env)
 
 ### Parameters
 
-Four sliders. A **model is only a preset of these four**, not its own axis.
+Four sliders. There is no mode axis beside them. An example overlay is only a saved set of these four numbers.
 
 | Slider | Role in the recursion |
 | --- | --- |
 | Feedback amount | Scale on `env` inside `x` |
 | Max release Hz | Scale on `shape`, in hertz. This is what becomes the one-pole coefficient |
-| Offset | Added in `x`. For the sandbox presets this absorbs the Decay knob (below) |
+| Offset | Added in `x` |
 | Trigger height | `env[0]`, the state at the release edge, before the first fall sample |
 
-Sandbox presets baked into those four numbers (Decay is the module knob, not a slider here):
+Sample tuples used as overlay examples:
 
-| Model | Feedback | Max release Hz | Offset | Trigger height |
+| Example | Feedback | Max release Hz | Offset | Trigger height |
 | --- | --- | --- | --- | --- |
-| Short | 1 | 10 | `0.5 − decay` (preset uses decay 0.5, so 0) | 1 |
-| Long | 0.7718 | 1000 | `1 − decay` (preset uses decay 0.5, so 0.5) | 1 |
-| Long (offset 0) | 0.7718 | 1000 | 0 (Long at decay 1) | 1 |
+| A | 1 | 10 | 0 | 1 |
+| B | 0.7718 | 1000 | 0.5 | 1 |
+| C | 0.7718 | 1000 | 0 | 1 |
 
-Short and Long use the same recursion. Loading a model copies its four values into the sliders. Checking it overlays that curve.
+Every example uses the same recursion. **Load** copies that tuple into the sliders. Checking it draws the curve on top of the live one. The page opens with the sliders on example B.
 
 ### Floors
 
@@ -57,13 +57,13 @@ pip install -r requirements.txt
 python -m graphs.ping_envelope
 ```
 
-That prints tail times for the three presets, writes a self-contained Plotly snapshot to `graphs/ping_envelope/preview.html`, and copies `plotly.min.js` beside the page when the installed package has it.
+That prints tail times for the three example settings, writes a self-contained Plotly snapshot to `graphs/ping_envelope/preview.html`, and copies `plotly.min.js` beside the page when the installed package has it.
 
 Interactive graph (sliders, overlay checkboxes, both floor lines):
 
 Open `graphs/ping_envelope/index.html` in a browser.
 
-The page uses the local `plotly.min.js` from the command above. Without that file it loads Plotly from the CDN. The four sliders recompute the sample loop and update the Plotly traces. Overlay checkboxes add or remove preset curves. Log amplitude is on by default so 0.001 and 0.01 sit on separate decades; uncheck it for a linear axis. Time window switches between the full tail, the live curve, and the first 2 seconds.
+The page uses the local `plotly.min.js` from the command above. Without that file it loads Plotly from the CDN. The four sliders recompute the sample loop and update the Plotly traces. Example checkboxes add or remove those saved settings. Log amplitude is on by default so 0.001 and 0.01 sit on separate decades; uncheck it for a linear axis. Time window switches between the full tail, the live curve, and the first 2 seconds.
 
 Notebook (optional Jupyter):
 
@@ -86,10 +86,10 @@ The suite checks the one-pole step, that 0.001 is the stop (and 0.01 is not), an
 
 Create `graphs/<next>/` the same way:
 
-- `config.json` for constants and named presets
+- `config.json` for constants and example slider settings
 - `simulate.py` for the recursion, with the update written out in the module docstring
 - `plot.py` for a Plotly figure
 - `index.html` when the study needs live controls
 - a notebook if a narrated walkthrough helps
 
-Keep presets as bundles of the real parameters. Do not add a model enum as its own axis.
+Keep extra curves as saved sets of the same parameters. Do not add a mode axis.

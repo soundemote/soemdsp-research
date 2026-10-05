@@ -5,7 +5,7 @@
   "max_seconds": 120,
   "exp_decades": 5,
   "record_relative_drop": 0.005,
-  "live_defaults_id": "long",
+  "live_defaults_id": "example_b",
   "live_color": "#1d4ed8",
   "slider_ranges": {
     "feedback": {"min": 0, "max": 2, "step": 0.0001},
@@ -13,39 +13,39 @@
     "offset": {"min": -1.5, "max": 1.5, "step": 0.001},
     "trigger_height": {"min": 0, "max": 2, "step": 0.001}
   },
-  "models": [
+  "examples": [
     {
-      "id": "short",
-      "label": "Short",
+      "id": "example_a",
+      "label": "Example A",
       "color": "#b91c1c",
       "visible_by_default": true,
       "feedback": 1.0,
       "max_release_hz": 10,
       "offset": 0.0,
       "trigger_height": 1.0,
-      "note": "Sandbox Short at Decay 0.5. Feedback 1, max release 10 Hz, offset = 0.5 − decay."
+      "note": "feedback 1, max release 10 Hz, offset 0, trigger height 1"
     },
     {
-      "id": "long",
-      "label": "Long",
+      "id": "example_b",
+      "label": "Example B",
       "color": "#047857",
       "visible_by_default": false,
       "feedback": 0.7718,
       "max_release_hz": 1000,
       "offset": 0.5,
       "trigger_height": 1.0,
-      "note": "Sandbox Long at Decay 0.5. Feedback 0.7718, max release 1000 Hz, offset = 1 − decay."
+      "note": "feedback 0.7718, max release 1000 Hz, offset 0.5, trigger height 1"
     },
     {
-      "id": "long_offset0",
-      "label": "Long (offset 0)",
+      "id": "example_c",
+      "label": "Example C",
       "color": "#b45309",
       "visible_by_default": true,
       "feedback": 0.7718,
       "max_release_hz": 1000,
       "offset": 0.0,
       "trigger_height": 1.0,
-      "note": "Sandbox Long at Decay 1. Same feedback and max release as Long, with offset 0."
+      "note": "feedback 0.7718, max release 1000 Hz, offset 0, trigger height 1"
     }
   ]
 }

@@ -18,12 +18,9 @@ Max release Hz enters only as the scale on the 5-decade shape. Feedback
 and offset enter only through x. Trigger height is the envelope state at
 the release edge, before the first fall sample.
 
-The 5-decade shape is the sandbox Ping Envelope release map. Short and
-Long use that same map; in this graph they are presets of the four
-parameters, not an extra axis. Offset absorbs the module Decay knob:
-
-    Short offset = 0.5 - decay     Short feedback = 1       Short max = 10 Hz
-    Long offset  = 1 - decay       Long feedback  = 0.7718  Long max  = 1000 Hz
+The 5-decade shape is the fixed Ping Envelope release map. It is not a
+fifth control. Saved examples in ``config.json`` are only tuples of the
+four parameters (feedback, max release Hz, offset, trigger height).
 
 Recording stops at amplitude 0.001 (−60 dB re 1), the engineering tail.
 A time cap, or a stall where the release rate hits 0 above that floor,
@@ -44,7 +41,7 @@ _CONFIG: dict | None = None
 
 
 def load_config() -> dict:
-    """Return the shared graph constants and model presets."""
+    """Return the shared graph constants and example slider settings."""
     global _CONFIG
     if _CONFIG is None:
         _CONFIG = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
@@ -53,7 +50,7 @@ def load_config() -> dict:
 
 @dataclass(frozen=True)
 class PingParams:
-    """The four sweepable fall parameters. A model is only a named bundle of these."""
+    """The four sweepable fall parameters."""
 
     feedback: float
     max_release_hz: float
@@ -71,7 +68,9 @@ class PingParams:
 
 
 @dataclass(frozen=True)
-class Model:
+class Example:
+    """A saved set of the four fall parameters, for overlay comparison."""
+
     id: str
     label: str
     color: str
@@ -95,12 +94,12 @@ class FallCurve:
     params: PingParams
 
 
-def models() -> tuple[Model, ...]:
+def examples() -> tuple[Example, ...]:
     config = load_config()
     out = []
-    for raw in config["models"]:
+    for raw in config["examples"]:
         out.append(
-            Model(
+            Example(
                 id=str(raw["id"]),
                 label=str(raw["label"]),
                 color=str(raw["color"]),
@@ -112,11 +111,11 @@ def models() -> tuple[Model, ...]:
     return tuple(out)
 
 
-def model_by_id(model_id: str) -> Model:
-    for model in models():
-        if model.id == model_id:
-            return model
-    raise KeyError(model_id)
+def example_by_id(example_id: str) -> Example:
+    for example in examples():
+        if example.id == example_id:
+            return example
+    raise KeyError(example_id)
 
 
 def release_hz(env: float, params: PingParams, decades: float = 5.0) -> float:

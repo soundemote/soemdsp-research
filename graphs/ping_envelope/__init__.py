@@ -1,21 +1,21 @@
 """Ping Envelope fall graph."""
 
 from graphs.ping_envelope.simulate import (
+    Example,
     FallCurve,
-    Model,
     PingParams,
+    example_by_id,
+    examples,
     load_config,
-    model_by_id,
-    models,
     simulate_fall,
 )
 
 __all__ = [
+    "Example",
     "FallCurve",
-    "Model",
     "PingParams",
+    "example_by_id",
+    "examples",
     "load_config",
-    "model_by_id",
-    "models",
     "simulate_fall",
 ]
