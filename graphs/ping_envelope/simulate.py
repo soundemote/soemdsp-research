@@ -4,15 +4,15 @@ The curve is one continuous one-pole chase toward silence. There is no
 attack stage, no hold, and no multipoint ADSR.
 
     env[0] = trigger_height
-    x      = feedback * env + offset
-    shape  = 0 if x <= 0 else 1 if x >= 1 else 10 ** (5 * (x - 1))
-    f      = shape * max_release_hz
-    k      = 1 - exp(-2 * pi * f / sample_rate)
-    env    = env + k * (0 - env)
+    x = feedback * env + offset
+    shape = clip(10 ** (5 * (x - 1)), 0, 1) * max(sign(x), 0)
+    f = shape * max_release_hz
+    u = max(sign(sample_rate / 2 - f), 0)
+    k = u * clip(1 - exp(-2 * pi * f / sample_rate), 0, 1) + (1 - u)
+    env = env + k * (0 - env)
 
-k is 0 when f <= 0 and 1 when f is at or above Nyquist.
-
-Sample rate is 48 kHz (``config.json``). It is not a slider.
+``clip(v, 0, 1) = min(max(v, 0), 1)`` and ``sign(0) = 0``. Sample rate is
+48 kHz (``config.json``). It is not a slider.
 
 Max release Hz enters only as the scale on the 5-decade shape. Feedback
 and offset enter only through x. Trigger height is the envelope state at
